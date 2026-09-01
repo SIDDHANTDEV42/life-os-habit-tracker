@@ -1,0 +1,215 @@
+﻿sheets ['Sheet1']
+
+SHEET Sheet1 dim 101 49
+merged ['A1:AI1']
+charts []
+1 [datetime.datetime(2026, 5, 1, 0, 0), None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None]
+10 ['Strongest Day  %', '=MAX(C28:AF28)', None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None]
+11 ['Strongest Day no.', '=MATCH(MAX(C28:AF28),C28:AF28,0)', None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None]
+12 ['Weakest %', '=MIN(C28:AF28)', None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None]
+13 ['Stability Index', '=MAX(C28:AF28) - MIN(C28:AF28)', None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None]
+15 [None, 'days', 'FRI', 'SAT', 'SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI']
+16 [None, 'HABITS ', 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0]
+17 [None, 'PYQ', True, True, True, True, True, True, True, True, True, True, True, True, True, True, False, False, False, False, False, False, False, False]
+18 [None, 'Sleep Shift A (5 hrs)', True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True]
+19 [None, 'Water Duty', True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True]
+20 [None, 'Deep Work Session', True, True, True, True, True, True, True, True, True, True, True, True, True, False, False, True, False, False, False, False, False, False]
+21 [None, 'Lunch / Morning Meal', True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True]
+22 [None, 'Sleep Shift B (2 hrs)', True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, False, True, True, True, True, True, True]
+23 [None, 'Offline Classes', True, True, True, True, True, True, True, True, True, True, True, True, True, False, False, True, False, False, False, False, False, False]
+24 [None, 'BSc CS / Revision', False, False, False, False, False, False, False, False, True, True, True, False, False, False, False, False, True, True, True, True, True, True]
+25 [None, 'Buffer / Self-Study', True, True, True, True, True, True, True, True, True, True, True, True, True, False, False, False, True, True, True, True, True, True]
+26 [None, 'Dinner & TMKOC', True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, False, True, True, True, True, True, True]
+27 [None, 'DAILY COUNT', '= C17*1 + C18*1 + C19*1 + C20*1 + C21*1 + C22*1 + C23*1 + C24*1 +C25*1 +C26*1 ', '= D17*1 + D18*1 + D19*1 + D20*1 + D21*1 + D22*1 + D23*1 + D24*1 +D25*1 +D26*1 ', '= E17*1 + E18*1 + E19*1 + E20*1 + E21*1 + E22*1 + E23*1 + E24*1 +E25*1 +E26*1 ', '= F17*1 + F18*1 + F19*1 + F20*1 + F21*1 + F22*1 + F23*1 + F24*1 +F25*1 +F26*1 ', '= G17*1 + G18*1 + G19*1 + G20*1 + G21*1 + G22*1 + G23*1 + G24*1 +G25*1 +G26*1 ', '= H17*1 + H18*1 + H19*1 + H20*1 + H21*1 + H22*1 + H23*1 + H24*1 +H25*1 +H26*1 ', '= I17*1 + I18*1 + I19*1 + I20*1 + I21*1 + I22*1 + I23*1 + I24*1 +I25*1 +I26*1 ', '= J17*1 + J18*1 + J19*1 + J20*1 + J21*1 + J22*1 + J23*1 + J24*1 +J25*1 +J26*1 ', '= K17*1 + K18*1 + K19*1 + K20*1 + K21*1 + K22*1 + K23*1 + K24*1 +K25*1 +K26*1 ', '= L17*1 + L18*1 + L19*1 + L20*1 + L21*1 + L22*1 + L23*1 + L24*1 +L25*1 +L26*1 ', '= M17*1 + M18*1 + M19*1 + M20*1 + M21*1 + M22*1 + M23*1 + M24*1 +M25*1 +M26*1 ', '= N17*1 + N18*1 + N19*1 + N20*1 + N21*1 + N22*1 + N23*1 + N24*1 +N25*1 +N26*1 ', '= O17*1 + O18*1 + O19*1 + O20*1 + O21*1 + O22*1 + O23*1 + O24*1 +O25*1 +O26*1 ', '= P17*1 + P18*1 + P19*1 + P20*1 + P21*1 + P22*1 + P23*1 + P24*1 +P25*1 +P26*1 ', '= Q17*1 + Q18*1 + Q19*1 + Q20*1 + Q21*1 + Q22*1 + Q23*1 + Q24*1 +Q25*1 +Q26*1 ', '= R17*1 + R18*1 + R19*1 + R20*1 + R21*1 + R22*1 + R23*1 + R24*1 +R25*1 +R26*1 ', '= S17*1 + S18*1 + S19*1 + S20*1 + S21*1 + S22*1 + S23*1 + S24*1 +S25*1 +S26*1 ', '= T17*1 + T18*1 + T19*1 + T20*1 + T21*1 + T22*1 + T23*1 + T24*1 +T25*1 +T26*1 ', '= U17*1 + U18*1 + U19*1 + U20*1 + U21*1 + U22*1 + U23*1 + U24*1 +U25*1 +U26*1 ', '= V17*1 + V18*1 + V19*1 + V20*1 + V21*1 + V22*1 + V23*1 + V24*1 +V25*1 +V26*1 ', '= W17*1 + W18*1 + W19*1 + W20*1 + W21*1 + W22*1 + W23*1 + W24*1 +W25*1 +W26*1 ', '= X17*1 + X18*1 + X19*1 + X20*1 + X21*1 + X22*1 + X23*1 + X24*1 +X25*1 +X26*1 ']
+28 [None, '%COMPLETED', '= C27/10', '= D27/10', '= E27/10', '= F27/10', '= G27/10', '= H27/10', '= I27/10', '= J27/10', '= K27/10', '= L27/10', '= M27/10', '= N27/10', '= O27/10', '= P27/10', '= Q27/10', '= R27/10', '= S27/10', '= T27/10', '= U27/10', '= V27/10', '= W27/10', '= X27/10']
+29 [None, 'DAILY STATUS', '=IF(C28<60%,"FAILED","GOOD")', '=IF(D28<60%,"FAILED","GOOD")', '=IF(E28<60%,"FAILED","GOOD")', '=IF(F28<60%,"FAILED","GOOD")', '=IF(G28<60%,"FAILED","GOOD")', '=IF(H28<60%,"FAILED","GOOD")', '=IF(I28<60%,"FAILED","GOOD")', '=IF(J28<60%,"FAILED","GOOD")', '=IF(K28<60%,"FAILED","GOOD")', '=IF(L28<60%,"FAILED","GOOD")', '=IF(M28<60%,"FAILED","GOOD")', '=IF(N28<60%,"FAILED","GOOD")', '=IF(O28<60%,"FAILED","GOOD")', '=IF(P28<60%,"FAILED","GOOD")', '=IF(Q28<60%,"FAILED","GOOD")', '=IF(R28<60%,"FAILED","GOOD")', '=IF(S28<60%,"FAILED","GOOD")', '=IF(T28<60%,"FAILED","GOOD")', '=IF(U28<60%,"FAILED","GOOD")', '=IF(V28<60%,"FAILED","GOOD")', '=IF(W28<60%,"FAILED","GOOD")', '=IF(X28<60%,"FAILED","GOOD")']
+30 [None, 'DAILY SCORE', '=IF(C29="FAILED",0,C28)', '=IF(D29="FAILED",0,D28)', '=IF(E29="FAILED",0,E28)', '=IF(F29="FAILED",0,F28)', '=IF(G29="FAILED",0,G28)', '=IF(H29="FAILED",0,H28)', '=IF(I29="FAILED",0,I28)', '=IF(J29="FAILED",0,J28)', '=IF(K29="FAILED",0,K28)', '=IF(L29="FAILED",0,L28)', '=IF(M29="FAILED",0,M28)', '=IF(N29="FAILED",0,N28)', '=IF(O29="FAILED",0,O28)', '=IF(P29="FAILED",0,P28)', '=IF(Q29="FAILED",0,Q28)', '=IF(R29="FAILED",0,R28)', '=IF(S29="FAILED",0,S28)', '=IF(T29="FAILED",0,T28)', '=IF(U29="FAILED",0,U28)', '=IF(V29="FAILED",0,V28)', '=IF(W29="FAILED",0,W28)', '=IF(X29="FAILED",0,X28)']
+31 [None, 'WEEKLY SCORES', '=AVERAGE(C30:I30)\n', None, None, None, None, None, None, '=AVERAGE(J30:P30)\n', None, None, None, None, None, None, '=AVERAGE(Q30:W30)\n', None, None, None, None, None, None, '=AVERAGE(X30:AD30)\n']
+32 [None, 'Weekly PASS / FAIL', '=IF(C31>=0.7,"PASS","FAIL")', None, None, None, None, None, None, '=IF(J31>=0.7,"PASS","FAIL")', None, None, None, None, None, None, '=IF(Q31>=0.7,"PASS","FAIL")', 'start full mock', None, None, None, None, None, '=IF(X31>=0.7,"PASS","FAIL")']
+33 [None, 'BASELINE', 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6]
+35 ['EXAM DATES', 'EXAMS', None, None, None, None, None, None, None, None, None, None, None, None, None, 'cet 2nd', None, None, None, None, None, None, None, None]
+36 [datetime.datetime(2026, 1, 21, 0, 0), 'JEE 1st ATTEMPT', None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None]
+37 [datetime.datetime(2026, 2, 3, 0, 0), 'BSC CS  sem 1', None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None]
+38 [datetime.datetime(2026, 4, 5, 0, 0), 'JEE 2nd ATTEMPT', None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None]
+39 [datetime.datetime(2026, 4, 11, 0, 0), 'CET 1st ATTEMPT', None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None]
+40 [datetime.datetime(2026, 5, 14, 0, 0), 'CET 2nd ATTEMPT', None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None]
+41 ['may ending ', 'bsc cs sem 2', None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None]
+CALCULATED PREVIEW
+V 10 ['Strongest Day  %', 1, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None]
+V 11 ['Strongest Day no.', 9, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None]
+V 12 ['Weakest %', 0.5, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None]
+V 13 ['Stability Index', 0.5, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None]
+V 27 [None, 'DAILY COUNT', 9, 9, 9, 9, 9, 9, 9, 9, 10, 10, 10, 9, 9, 6, 5, 5, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, None, None, None, None, None, None, None, None, None]
+V 28 [None, '%COMPLETED', 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 1, 1, 1, 0.9, 0.9, 0.6, 0.5, 0.5, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, None, None, None, None, None, None, None, None, None]
+V 29 [None, 'DAILY STATUS', 'GOOD', 'GOOD', 'GOOD', 'GOOD', 'GOOD', 'GOOD', 'GOOD', 'GOOD', 'GOOD', 'GOOD', 'GOOD', 'GOOD', 'GOOD', 'GOOD', 'FAILED', 'FAILED', 'GOOD', 'GOOD', 'GOOD', 'GOOD', 'GOOD', 'GOOD', 'GOOD', 'GOOD', 'GOOD', 'GOOD', 'GOOD', 'GOOD', 'GOOD', 'GOOD', 'GOOD', None, None, None, None, None, None, None, None, None]
+V 30 [None, 'DAILY SCORE', 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 1, 1, 1, 0.9, 0.9, 0.6, 0, 0, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, None, None, None, None, None, None, None, None, None]
+V 31 [None, 'WEEKLY SCORES', 0.9, None, None, None, None, None, None, 0.9, None, None, None, None, None, None, 0.5, None, None, None, None, None, None, 0.7, None, None, None, None, None, None, 0.7, None, None, None, None, None, None, None, None, None, None, None]
+V 32 [None, 'Weekly PASS / FAIL', 'PASS', None, None, None, None, None, None, 'PASS', None, None, None, None, None, None, 'FAIL', 'start full mock', None, None, None, None, None, 'PASS', None, None, None, None, None, None, 'PASS', None, None, None, None, None, None, None, None, None, None, None]
+V 33 [None, 'BASELINE', 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, None, None, None, None, None, None, None, None, None]
+formula_count 168
+F B10 =MAX(C28:AF28)
+F B11 =MATCH(MAX(C28:AF28),C28:AF28,0)
+F B12 =MIN(C28:AF28)
+F B13 =MAX(C28:AF28) - MIN(C28:AF28)
+F AH17 =COUNTIF(C17:AF17,true)
+F AI17 =IFERROR(__xludf.DUMMYFUNCTION("SPARKLINE(AH17,{""charttype"",""bar"";""max"",31;""color1"",""GREEN""})"),"")
+F AJ17 =AH17/COUNTA(C17:AD17)
+F AH18 =COUNTIF(C18:AF18,true)
+F AI18 =IFERROR(__xludf.DUMMYFUNCTION("SPARKLINE(AH18,{""charttype"",""bar"";""max"",31;""color1"",""GREEN""})"),"")
+F AJ18 =AH18/COUNTA(C18:AD18)
+F AH19 =COUNTIF(C19:AF19,true)
+F AI19 =IFERROR(__xludf.DUMMYFUNCTION("SPARKLINE(AH19,{""charttype"",""bar"";""max"",31;""color1"",""GREEN""})"),"")
+F AJ19 =AH19/COUNTA(C19:AD19)
+F AH20 =COUNTIF(C20:AF20,true)
+F AI20 =IFERROR(__xludf.DUMMYFUNCTION("SPARKLINE(AH20,{""charttype"",""bar"";""max"",31;""color1"",""GREEN""})"),"")
+F AJ20 =AH20/COUNTA(C20:AD20)
+F AH21 =COUNTIF(C21:AF21,true)
+F AI21 =IFERROR(__xludf.DUMMYFUNCTION("SPARKLINE(AH21,{""charttype"",""bar"";""max"",31;""color1"",""GREEN""})"),"")
+F AJ21 =AH21/COUNTA(C21:AD21)
+F AH22 =COUNTIF(C22:AF22,true)
+F AI22 =IFERROR(__xludf.DUMMYFUNCTION("SPARKLINE(AH22,{""charttype"",""bar"";""max"",31;""color1"",""GREEN""})"),"")
+F AJ22 =AH22/COUNTA(C22:AD22)
+F AH23 =COUNTIF(C23:AF23,true)
+F AI23 =IFERROR(__xludf.DUMMYFUNCTION("SPARKLINE(AH23,{""charttype"",""bar"";""max"",31;""color1"",""GREEN""})"),"")
+F AJ23 =AH23/COUNTA(C23:AD23)
+F AH24 =COUNTIF(C24:AF24,true)
+F AI24 =IFERROR(__xludf.DUMMYFUNCTION("SPARKLINE(AH24,{""charttype"",""bar"";""max"",31;""color1"",""GREEN""})"),"")
+F AJ24 =AH24/COUNTA(C24:AD24)
+F AH25 =COUNTIF(C25:AF25,true)
+F AI25 =IFERROR(__xludf.DUMMYFUNCTION("SPARKLINE(AH25,{""charttype"",""bar"";""max"",31;""color1"",""GREEN""})"),"")
+F AJ25 =AH25/COUNTA(C25:AD25)
+F AH26 =COUNTIF(C26:AF26,true)
+F AI26 =IFERROR(__xludf.DUMMYFUNCTION("SPARKLINE(AH26,{""charttype"",""bar"";""max"",31;""color1"",""GREEN""})"),"")
+F AJ26 =AH26/COUNTA(C26:AD26)
+F C27 = C17*1 + C18*1 + C19*1 + C20*1 + C21*1 + C22*1 + C23*1 + C24*1 +C25*1 +C26*1 
+F D27 = D17*1 + D18*1 + D19*1 + D20*1 + D21*1 + D22*1 + D23*1 + D24*1 +D25*1 +D26*1 
+F E27 = E17*1 + E18*1 + E19*1 + E20*1 + E21*1 + E22*1 + E23*1 + E24*1 +E25*1 +E26*1 
+F F27 = F17*1 + F18*1 + F19*1 + F20*1 + F21*1 + F22*1 + F23*1 + F24*1 +F25*1 +F26*1 
+F G27 = G17*1 + G18*1 + G19*1 + G20*1 + G21*1 + G22*1 + G23*1 + G24*1 +G25*1 +G26*1 
+F H27 = H17*1 + H18*1 + H19*1 + H20*1 + H21*1 + H22*1 + H23*1 + H24*1 +H25*1 +H26*1 
+F I27 = I17*1 + I18*1 + I19*1 + I20*1 + I21*1 + I22*1 + I23*1 + I24*1 +I25*1 +I26*1 
+F J27 = J17*1 + J18*1 + J19*1 + J20*1 + J21*1 + J22*1 + J23*1 + J24*1 +J25*1 +J26*1 
+F K27 = K17*1 + K18*1 + K19*1 + K20*1 + K21*1 + K22*1 + K23*1 + K24*1 +K25*1 +K26*1 
+F L27 = L17*1 + L18*1 + L19*1 + L20*1 + L21*1 + L22*1 + L23*1 + L24*1 +L25*1 +L26*1 
+F M27 = M17*1 + M18*1 + M19*1 + M20*1 + M21*1 + M22*1 + M23*1 + M24*1 +M25*1 +M26*1 
+F N27 = N17*1 + N18*1 + N19*1 + N20*1 + N21*1 + N22*1 + N23*1 + N24*1 +N25*1 +N26*1 
+F O27 = O17*1 + O18*1 + O19*1 + O20*1 + O21*1 + O22*1 + O23*1 + O24*1 +O25*1 +O26*1 
+F P27 = P17*1 + P18*1 + P19*1 + P20*1 + P21*1 + P22*1 + P23*1 + P24*1 +P25*1 +P26*1 
+F Q27 = Q17*1 + Q18*1 + Q19*1 + Q20*1 + Q21*1 + Q22*1 + Q23*1 + Q24*1 +Q25*1 +Q26*1 
+F R27 = R17*1 + R18*1 + R19*1 + R20*1 + R21*1 + R22*1 + R23*1 + R24*1 +R25*1 +R26*1 
+F S27 = S17*1 + S18*1 + S19*1 + S20*1 + S21*1 + S22*1 + S23*1 + S24*1 +S25*1 +S26*1 
+F T27 = T17*1 + T18*1 + T19*1 + T20*1 + T21*1 + T22*1 + T23*1 + T24*1 +T25*1 +T26*1 
+F U27 = U17*1 + U18*1 + U19*1 + U20*1 + U21*1 + U22*1 + U23*1 + U24*1 +U25*1 +U26*1 
+F V27 = V17*1 + V18*1 + V19*1 + V20*1 + V21*1 + V22*1 + V23*1 + V24*1 +V25*1 +V26*1 
+F W27 = W17*1 + W18*1 + W19*1 + W20*1 + W21*1 + W22*1 + W23*1 + W24*1 +W25*1 +W26*1 
+F X27 = X17*1 + X18*1 + X19*1 + X20*1 + X21*1 + X22*1 + X23*1 + X24*1 +X25*1 +X26*1 
+F Y27 = Y17*1 + Y18*1 + Y19*1 + Y20*1 + Y21*1 + Y22*1 + Y23*1 + Y24*1 +Y25*1 +Y26*1 
+F Z27 = Z17*1 + Z18*1 + Z19*1 + Z20*1 + Z21*1 + Z22*1 + Z23*1 + Z24*1 +Z25*1 +Z26*1 
+F AA27 = AA17*1 + AA18*1 + AA19*1 + AA20*1 + AA21*1 + AA22*1 + AA23*1 + AA24*1 +AA25*1 +AA26*1 
+F AB27 = AB17*1 + AB18*1 + AB19*1 + AB20*1 + AB21*1 + AB22*1 + AB23*1 + AB24*1 +AB25*1 +AB26*1 
+F AC27 = AC17*1 + AC18*1 + AC19*1 + AC20*1 + AC21*1 + AC22*1 + AC23*1 + AC24*1 +AC25*1 +AC26*1 
+F AD27 = AD17*1 + AD18*1 + AD19*1 + AD20*1 + AD21*1 + AD22*1 + AD23*1 + AD24*1 +AD25*1 +AD26*1 
+F AE27 = AE17*1 + AE18*1 + AE19*1 + AE20*1 + AE21*1 + AE22*1 + AE23*1 + AE24*1 +AE25*1 +AE26*1 
+F AF27 = AF17*1 + AF18*1 + AF19*1 + AF20*1 + AF21*1 + AF22*1 + AF23*1 + AF24*1 +AF25*1 +AF26*1 
+F AG27 = AG17*1 + AG18*1 + AG19*1 + AG20*1 + AG21*1 + AG22*1 + AG23*1 + AG24*1 +AG25*1 +AG26*1 
+F C28 = C27/10
+F D28 = D27/10
+F E28 = E27/10
+F F28 = F27/10
+F G28 = G27/10
+F H28 = H27/10
+F I28 = I27/10
+F J28 = J27/10
+F K28 = K27/10
+F L28 = L27/10
+F M28 = M27/10
+F N28 = N27/10
+F O28 = O27/10
+F P28 = P27/10
+F Q28 = Q27/10
+F R28 = R27/10
+F S28 = S27/10
+F T28 = T27/10
+F U28 = U27/10
+F V28 = V27/10
+F W28 = W27/10
+F X28 = X27/10
+F Y28 = Y27/10
+F Z28 = Z27/10
+F AA28 = AA27/10
+F AB28 = AB27/10
+F AC28 = AC27/10
+F AD28 = AD27/10
+F AE28 = AE27/10
+F AF28 = AF27/10
+F AG28 = AG27/10
+F C29 =IF(C28<60%,"FAILED","GOOD")
+F D29 =IF(D28<60%,"FAILED","GOOD")
+F E29 =IF(E28<60%,"FAILED","GOOD")
+F F29 =IF(F28<60%,"FAILED","GOOD")
+F G29 =IF(G28<60%,"FAILED","GOOD")
+F H29 =IF(H28<60%,"FAILED","GOOD")
+F I29 =IF(I28<60%,"FAILED","GOOD")
+F J29 =IF(J28<60%,"FAILED","GOOD")
+F K29 =IF(K28<60%,"FAILED","GOOD")
+F L29 =IF(L28<60%,"FAILED","GOOD")
+F M29 =IF(M28<60%,"FAILED","GOOD")
+F N29 =IF(N28<60%,"FAILED","GOOD")
+F O29 =IF(O28<60%,"FAILED","GOOD")
+F P29 =IF(P28<60%,"FAILED","GOOD")
+F Q29 =IF(Q28<60%,"FAILED","GOOD")
+F R29 =IF(R28<60%,"FAILED","GOOD")
+F S29 =IF(S28<60%,"FAILED","GOOD")
+F T29 =IF(T28<60%,"FAILED","GOOD")
+F U29 =IF(U28<60%,"FAILED","GOOD")
+F V29 =IF(V28<60%,"FAILED","GOOD")
+F W29 =IF(W28<60%,"FAILED","GOOD")
+F X29 =IF(X28<60%,"FAILED","GOOD")
+F Y29 =IF(Y28<60%,"FAILED","GOOD")
+F Z29 =IF(Z28<60%,"FAILED","GOOD")
+F AA29 =IF(AA28<60%,"FAILED","GOOD")
+F AB29 =IF(AB28<60%,"FAILED","GOOD")
+F AC29 =IF(AC28<60%,"FAILED","GOOD")
+F AD29 =IF(AD28<60%,"FAILED","GOOD")
+F AE29 =IF(AE28<60%,"FAILED","GOOD")
+F AF29 =IF(AF28<60%,"FAILED","GOOD")
+F AG29 =IF(AG28<60%,"FAILED","GOOD")
+F C30 =IF(C29="FAILED",0,C28)
+F D30 =IF(D29="FAILED",0,D28)
+F E30 =IF(E29="FAILED",0,E28)
+F F30 =IF(F29="FAILED",0,F28)
+F G30 =IF(G29="FAILED",0,G28)
+F H30 =IF(H29="FAILED",0,H28)
+F I30 =IF(I29="FAILED",0,I28)
+F J30 =IF(J29="FAILED",0,J28)
+F K30 =IF(K29="FAILED",0,K28)
+F L30 =IF(L29="FAILED",0,L28)
+F M30 =IF(M29="FAILED",0,M28)
+F N30 =IF(N29="FAILED",0,N28)
+F O30 =IF(O29="FAILED",0,O28)
+F P30 =IF(P29="FAILED",0,P28)
+F Q30 =IF(Q29="FAILED",0,Q28)
+F R30 =IF(R29="FAILED",0,R28)
+F S30 =IF(S29="FAILED",0,S28)
+F T30 =IF(T29="FAILED",0,T28)
+F U30 =IF(U29="FAILED",0,U28)
+F V30 =IF(V29="FAILED",0,V28)
+F W30 =IF(W29="FAILED",0,W28)
+F X30 =IF(X29="FAILED",0,X28)
+F Y30 =IF(Y29="FAILED",0,Y28)
+F Z30 =IF(Z29="FAILED",0,Z28)
+F AA30 =IF(AA29="FAILED",0,AA28)
+F AB30 =IF(AB29="FAILED",0,AB28)
+F AC30 =IF(AC29="FAILED",0,AC28)
+F AD30 =IF(AD29="FAILED",0,AD28)
+F AE30 =IF(AE29="FAILED",0,AE28)
+F AF30 =IF(AF29="FAILED",0,AF28)
+F AG30 =IF(AG29="FAILED",0,AG28)
+F C31 =AVERAGE(C30:I30)
+
+F J31 =AVERAGE(J30:P30)
+
+fills sample [('A1', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('A10', None, 'rgb', '00000000', Values must be of type <class 'int'>), ('B10', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('A11', None, 'rgb', '00000000', Values must be of type <class 'int'>), ('B11', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('A12', None, 'rgb', '00000000', Values must be of type <class 'int'>), ('B12', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('A13', None, 'rgb', '00000000', Values must be of type <class 'int'>), ('B13', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('B15', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('C15', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('D15', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('E15', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('F15', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('G15', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('H15', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('I15', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('J15', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('K15', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('L15', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('M15', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('N15', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('O15', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('P15', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('Q15', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('R15', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('S15', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('T15', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('U15', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('V15', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('W15', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('X15', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('B16', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('C16', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('D16', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('E16', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('F16', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('G16', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('H16', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('I16', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('J16', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('K16', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('L16', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('M16', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('N16', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('O16', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('P16', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('Q16', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('R16', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('S16', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('T16', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('U16', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('V16', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('W16', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('X16', 'solid', 'rgb', 'FFDCE6F1', Values must be of type <class 'int'>), ('B17', None, 'rgb', '00000000', Values must be of type <class 'int'>), ('C17', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('D17', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('E17', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('F17', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('G17', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('H17', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('I17', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('J17', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('K17', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('L17', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('M17', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('N17', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('O17', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('P17', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('Q17', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('R17', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('S17', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('T17', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('U17', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('V17', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('W17', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('X17', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('B18', None, 'rgb', '00000000', Values must be of type <class 'int'>), ('C18', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('D18', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('E18', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('F18', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('G18', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('H18', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('I18', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('J18', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('K18', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('L18', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('M18', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('N18', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('O18', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('P18', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('Q18', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('R18', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('S18', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('T18', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('U18', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('V18', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>), ('W18', 'solid', 'rgb', 'FFF5F8FF', Values must be of type <class 'int'>)]
+fonts sample [('A1', 'Caveat', 28.0, True, None), ('A10', 'Arial', None, False, None), ('B10', 'Arial', None, False, None), ('A11', 'Arial', None, False, None), ('B11', 'Arial', None, False, None), ('A12', 'Arial', None, False, None), ('B12', 'Arial', None, False, None), ('A13', 'Arial', None, False, None), ('B13', 'Arial', None, False, None), ('B15', 'Comic Sans MS', None, True, 'FF000000'), ('C15', 'Arial', None, True, 'FF000000'), ('D15', 'Arial', None, True, 'FF000000'), ('E15', 'Arial', None, True, 'FF000000'), ('F15', 'Arial', None, True, 'FF000000'), ('G15', 'Arial', None, True, 'FF000000'), ('H15', 'Arial', None, True, 'FF000000'), ('I15', 'Arial', None, True, 'FF000000'), ('J15', 'Arial', None, True, 'FF000000'), ('K15', 'Arial', None, True, 'FF000000'), ('L15', 'Arial', None, True, 'FF000000'), ('M15', 'Arial', None, True, 'FF000000'), ('N15', 'Arial', None, True, 'FF000000'), ('O15', 'Arial', None, True, 'FF000000'), ('P15', 'Arial', None, True, 'FF000000'), ('Q15', 'Arial', None, True, 'FF000000'), ('R15', 'Arial', None, True, 'FF000000'), ('S15', 'Arial', None, True, 'FF000000'), ('T15', 'Arial', None, True, 'FF000000'), ('U15', 'Arial', None, True, 'FF000000'), ('V15', 'Arial', None, True, 'FF000000'), ('W15', 'Arial', None, True, 'FF000000'), ('X15', 'Arial', None, True, 'FF000000'), ('B16', 'Comic Sans MS', None, True, 'FF000000'), ('C16', 'Arial', None, True, 'FF000000'), ('D16', 'Arial', None, True, 'FF000000'), ('E16', 'Arial', None, True, 'FF000000'), ('F16', 'Arial', None, True, 'FF000000'), ('G16', 'Arial', None, True, 'FF000000'), ('H16', 'Arial', None, True, 'FF000000'), ('I16', 'Arial', None, True, 'FF000000'), ('J16', 'Arial', None, True, 'FF000000'), ('K16', 'Arial', None, True, 'FF000000'), ('L16', 'Arial', None, True, 'FF000000'), ('M16', 'Arial', None, True, 'FF000000'), ('N16', 'Arial', None, True, 'FF000000'), ('O16', 'Arial', None, True, 'FF000000'), ('P16', 'Arial', None, True, 'FF000000'), ('Q16', 'Arial', None, True, 'FF000000'), ('R16', 'Arial', None, True, 'FF000000'), ('S16', 'Arial', None, True, 'FF000000'), ('T16', 'Arial', None, True, 'FF000000'), ('U16', 'Arial', None, True, 'FF000000'), ('V16', 'Arial', None, True, 'FF000000'), ('W16', 'Arial', None, True, 'FF000000'), ('X16', 'Arial', None, True, 'FF000000'), ('B17', 'Arial', None, True, None), ('C17', 'Arial', None, False, 'FF0B5394'), ('D17', 'Arial', None, False, 'FF0B5394'), ('E17', 'Arial', None, False, 'FF0B5394'), ('F17', 'Arial', None, False, 'FF0B5394')]
+column widths [('A', 20.88), ('B', 43.88), ('C', 6.88), ('D', 13.0), ('E', 13.0), ('F', 13.0), ('G', 13.0), ('H', 13.0), ('I', 13.0), ('J', 13.0), ('K', 13.0), ('L', 13.0), ('M', 13.0), ('N', 13.0), ('O', 13.0), ('P', 13.0), ('Q', 13.0), ('R', 13.0), ('S', 13.0), ('T', 13.0), ('U', 13.0), ('V', 13.0), ('W', 13.0), ('X', 13.0), ('Y', 13.0), ('Z', 13.0), ('AA', 13.0), ('AB', 13.0), ('AC', 13.0), ('AD', 13.0), ('AE', 13.0), ('AF', 13.0), ('AG', 13.0), ('AH', 13.0), ('AI', 12.63), ('AJ', 5.13), ('AK', 12.63), ('AL', 13.0), ('AM', 13.0), ('AN', 13.0), ('AO', 13.0), ('AP', 13.0), ('AQ', 13.0), ('AR', 13.0), ('AS', 13.0), ('AT', 13.0), ('AU', 13.0), ('AV', 13.0), ('AW', 13.0)]
+row heights [(34, 65.25), (88, 49.5)]

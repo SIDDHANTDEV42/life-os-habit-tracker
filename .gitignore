@@ -1,0 +1,16 @@
+node_modules/
+dist/
+
+src-tauri/target/
+
+.env
+.env.*
+!.env.example
+
+*.db
+*.sqlite
+*.sqlite3
+
+setup.exe
+
+_HABBIT TRACKER OF may 2026.xlsx
