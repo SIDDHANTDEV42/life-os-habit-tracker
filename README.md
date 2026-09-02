@@ -25,8 +25,8 @@
 - **Right-Click Skip**: Mark planned rest or sick days via context menu.
 - **Daily Notes (`📝`)**: Attach and edit custom notes on any calendar date.
 
-### 📌 Floating Compact Desktop Widget
-- **Always-on-Top Floating Mode**: Switch to a compact widget window (`340x520`) with one click (`Widget` button).
+### 📌 Compact Desktop Widget
+- **Compact Widget Window**: Switch to a compact widget window (`340x520`) with one click (`Widget` button).
 - **Instant Optimistic UI**: Zero-lag checkmarks that persist directly to the SQLite backend.
 - **Live Target Sync**: Displays active goal countdown and today's completion percentage on your desktop.
 

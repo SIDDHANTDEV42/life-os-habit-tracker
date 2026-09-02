@@ -37,11 +37,10 @@ export default function App() {
   async function toggleWidgetMode() {
     const next = !isWidgetMode;
     setIsWidgetMode(next);
+    await setAlwaysOnTop(Boolean(settings.alwaysOnTop));
     if (next) {
-      await setAlwaysOnTop(true);
       await setWindowSize(340, 520);
     } else {
-      await setAlwaysOnTop(Boolean(settings.alwaysOnTop));
       await setWindowSize(1280, 800);
     }
   }

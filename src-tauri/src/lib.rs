@@ -373,7 +373,13 @@ fn set_window_size(app: tauri::AppHandle, width: f64, height: f64) -> Result<(),
 fn set_autostart(enabled: bool) -> Result<(), AppError> {
     #[cfg(target_os = "windows")]
     {
+        use std::os::windows::process::CommandExt;
         use std::process::Command;
+
+        // CREATE_NO_WINDOW (0x08000000): prevents reg.exe from opening a
+        // visible console window when this command is called at runtime.
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+
         if let Ok(exe_path) = std::env::current_exe() {
             let exe_str = exe_path.to_str().unwrap_or("");
             if enabled {
@@ -389,6 +395,7 @@ fn set_autostart(enabled: bool) -> Result<(), AppError> {
                         &format!("\"{}\"", exe_str),
                         "/f",
                     ])
+                    .creation_flags(CREATE_NO_WINDOW)
                     .output();
             } else {
                 let _ = Command::new("reg")
@@ -399,6 +406,7 @@ fn set_autostart(enabled: bool) -> Result<(), AppError> {
                         "LifeOSHabitTracker",
                         "/f",
                     ])
+                    .creation_flags(CREATE_NO_WINDOW)
                     .output();
             }
         }
