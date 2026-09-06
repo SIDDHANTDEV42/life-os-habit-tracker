@@ -9,24 +9,24 @@ export function toggleCompletion(habitId: number, date: string, completed: boole
   return invoke("set_completion", { habitId, date, completed });
 }
 
-export function addHabit(name: string, color?: string | null): Promise<Habit> {
-  return invoke("add_habit", { name, color: color ?? null });
+export function addHabit(name: string, color?: string | null, month?: string): Promise<Habit> {
+  return invoke("add_habit", { name, color: color ?? null, month: month ?? null });
 }
 
-export function renameHabit(id: number, name: string, color?: string | null): Promise<void> {
-  return invoke("update_habit", { id, name, color: color ?? null });
+export function renameHabit(id: number, name: string, color?: string | null, month?: string): Promise<void> {
+  return invoke("update_habit", { id, name, color: color ?? null, month: month ?? null });
 }
 
-export function archiveHabit(id: number, archived: boolean): Promise<void> {
-  return invoke("archive_habit", { id, archived });
+export function archiveHabit(id: number, archived: boolean, month?: string): Promise<void> {
+  return invoke("archive_habit", { id, archived, month: month ?? null });
 }
 
-export function deleteHabit(id: number): Promise<void> {
-  return invoke("delete_habit", { id });
+export function deleteHabit(id: number, month?: string): Promise<void> {
+  return invoke("delete_habit", { id, month: month ?? null });
 }
 
-export function reorderHabits(ids: number[]): Promise<void> {
-  return invoke("reorder_habits", { ids });
+export function reorderHabits(ids: number[], month?: string): Promise<void> {
+  return invoke("reorder_habits", { ids, month: month ?? null });
 }
 
 export function saveSettings(settings: Settings): Promise<void> {

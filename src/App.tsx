@@ -270,7 +270,9 @@ export default function App() {
             <SettingsPage
               habits={state.habits}
               settings={settings}
-              onRefresh={() => refresh()}
+              visibleMonth={visibleMonth}
+              onMonthChange={(m) => setVisibleMonth(m)}
+              onRefresh={(m) => refresh(m ?? visibleMonth)}
               onSettingsChange={updateSettings}
             />
           )}

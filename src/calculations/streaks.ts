@@ -13,11 +13,25 @@ export function calculateStreaks(habits: Habit[], completions: Completion[]): Ha
   yesterdayDate.setDate(yesterdayDate.getDate() - 1);
   const yesterday = toIsoDate(yesterdayDate);
 
+  // Map each habit id to its set of related habit ids (including parentId ancestors)
+  const habitIdMap = new Map<number, Set<number>>();
+  habits.forEach((habit) => {
+    const ids = new Set<number>([habit.id]);
+    let currentParent = habit.parentId;
+    while (currentParent) {
+      ids.add(currentParent);
+      const parentHabit = habits.find((h) => h.id === currentParent);
+      currentParent = parentHabit?.parentId ?? null;
+    }
+    habitIdMap.set(habit.id, ids);
+  });
+
   return habits.map((habit) => {
+    const relevantIds = habitIdMap.get(habit.id) ?? new Set([habit.id]);
     const completedDates = Array.from(
       new Set(
         completions
-          .filter((item) => item.habitId === habit.id && item.completed && item.date <= today)
+          .filter((item) => relevantIds.has(item.habitId) && item.completed && item.date <= today)
           .map((item) => item.date)
       )
     ).sort();

@@ -26,7 +26,7 @@ impl Serialize for AppError {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 struct Habit {
     id: i64,
@@ -35,6 +35,14 @@ struct Habit {
     archived: bool,
     created_at: String,
     color: Option<String>,
+    #[serde(default = "default_start_month")]
+    start_month: String,
+    end_month: Option<String>,
+    parent_id: Option<i64>,
+}
+
+fn default_start_month() -> String {
+    "2000-01".to_string()
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -69,21 +77,21 @@ struct Backup {
     settings: serde_json::Value,
 }
 
-
-
-
-
 fn initialize(conn: &Connection) -> Result<(), AppError> {
     conn.execute_batch(
         "
         PRAGMA foreign_keys = ON;
         CREATE TABLE IF NOT EXISTS habits (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL UNIQUE,
+            name TEXT NOT NULL,
             position INTEGER NOT NULL,
             created_at TEXT NOT NULL,
             archived INTEGER NOT NULL DEFAULT 0,
-            color TEXT
+            color TEXT,
+            start_month TEXT NOT NULL DEFAULT '2000-01',
+            end_month TEXT,
+            parent_id INTEGER,
+            FOREIGN KEY(parent_id) REFERENCES habits(id) ON DELETE SET NULL
         );
         CREATE TABLE IF NOT EXISTS habit_completions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -100,6 +108,27 @@ fn initialize(conn: &Connection) -> Result<(), AppError> {
         ",
     )?;
 
+    // Check if migration is needed for existing databases
+    let columns: Vec<String> = {
+        let mut stmt = conn.prepare("PRAGMA table_info(habits)")?;
+        let rows = stmt.query_map([], |row| row.get::<_, String>(1))?;
+        rows.filter_map(|r| r.ok()).collect()
+    };
+
+    if !columns.contains(&"start_month".to_string()) {
+        conn.execute("ALTER TABLE habits ADD COLUMN start_month TEXT NOT NULL DEFAULT '2000-01'", [])?;
+        conn.execute(
+            "UPDATE habits SET start_month = CASE WHEN length(created_at) >= 7 THEN substr(created_at, 1, 7) ELSE '2000-01' END",
+            [],
+        )?;
+    }
+    if !columns.contains(&"end_month".to_string()) {
+        conn.execute("ALTER TABLE habits ADD COLUMN end_month TEXT", [])?;
+    }
+    if !columns.contains(&"parent_id".to_string()) {
+        conn.execute("ALTER TABLE habits ADD COLUMN parent_id INTEGER", [])?;
+    }
+
     set_default_setting(conn, "theme", "system")?;
     set_default_setting(conn, "density", "comfortable")?;
     set_default_setting(conn, "accentColor", "#2563eb")?;
@@ -114,8 +143,51 @@ fn set_default_setting(conn: &Connection, key: &str, value: &str) -> Result<(), 
     Ok(())
 }
 
-fn load_habits(conn: &Connection) -> Result<Vec<Habit>, AppError> {
-    let mut stmt = conn.prepare("SELECT id, name, position, archived, created_at, color FROM habits ORDER BY position, id")?;
+fn current_month_str() -> String {
+    Local::now().format("%Y-%m").to_string()
+}
+
+fn previous_month_str(month: &str) -> Result<String, AppError> {
+    let start = NaiveDate::parse_from_str(&format!("{month}-01"), "%Y-%m-%d")
+        .map_err(|_| AppError::Message("Month must use YYYY-MM format.".to_string()))?;
+    let (year, month_num) = if start.month() == 1 {
+        (start.year() - 1, 12)
+    } else {
+        (start.year(), start.month() - 1)
+    };
+    Ok(format!("{year:04}-{month_num:02}"))
+}
+
+fn load_habits(conn: &Connection, month: Option<&str>) -> Result<Vec<Habit>, AppError> {
+    if let Some(m) = month {
+        let mut stmt = conn.prepare(
+            "SELECT id, name, position, archived, created_at, color, start_month, end_month, parent_id
+             FROM habits
+             WHERE start_month <= ?1
+               AND (end_month IS NULL OR end_month >= ?1)
+             ORDER BY position, id",
+        )?;
+        let rows = stmt.query_map(params![m], |row| {
+            Ok(Habit {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                position: row.get(2)?,
+                archived: row.get::<_, i64>(3)? == 1,
+                created_at: row.get(4)?,
+                color: row.get(5)?,
+                start_month: row.get(6)?,
+                end_month: row.get(7)?,
+                parent_id: row.get(8)?,
+            })
+        })?;
+        return rows.collect::<Result<Vec<_>, _>>().map_err(AppError::from);
+    }
+
+    let mut stmt = conn.prepare(
+        "SELECT id, name, position, archived, created_at, color, start_month, end_month, parent_id
+         FROM habits
+         ORDER BY position, id",
+    )?;
     let rows = stmt.query_map([], |row| {
         Ok(Habit {
             id: row.get(0)?,
@@ -124,6 +196,9 @@ fn load_habits(conn: &Connection) -> Result<Vec<Habit>, AppError> {
             archived: row.get::<_, i64>(3)? == 1,
             created_at: row.get(4)?,
             color: row.get(5)?,
+            start_month: row.get(6)?,
+            end_month: row.get(7)?,
+            parent_id: row.get(8)?,
         })
     })?;
     rows.collect::<Result<Vec<_>, _>>().map_err(AppError::from)
@@ -203,7 +278,7 @@ fn get_app_state(state: tauri::State<'_, Mutex<Connection>>, month: String) -> R
     let conn = state.lock().unwrap();
     let (start, end) = next_month(&month)?;
     Ok(AppState {
-        habits: load_habits(&conn)?,
+        habits: load_habits(&conn, Some(&month))?,
         completions: load_completions(&conn, Some(&start), Some(&end))?,
         all_completions: load_completions(&conn, None, None)?,
         settings: load_settings(&conn)?,
@@ -227,16 +302,31 @@ fn set_completion(state: tauri::State<'_, Mutex<Connection>>, habitId: i64, date
 }
 
 #[tauri::command]
-fn add_habit(state: tauri::State<'_, Mutex<Connection>>, name: String, color: Option<String>) -> Result<Habit, AppError> {
+fn add_habit(
+    state: tauri::State<'_, Mutex<Connection>>,
+    name: String,
+    color: Option<String>,
+    month: Option<String>,
+) -> Result<Habit, AppError> {
     let trimmed = name.trim();
     if trimmed.is_empty() {
         return Err(AppError::Message("Habit name cannot be empty.".to_string()));
     }
+    let target_month = month.filter(|m| m.len() == 7).unwrap_or_else(current_month_str);
     let conn = state.lock().unwrap();
-    let position: i64 = conn.query_row("SELECT COALESCE(MAX(position), -1) + 1 FROM habits", [], |row| row.get(0))?;
+    let position: i64 = conn
+        .query_row(
+            "SELECT COALESCE(MAX(position), -1) + 1 FROM habits WHERE start_month <= ?1 AND (end_month IS NULL OR end_month >= ?1)",
+            params![target_month],
+            |row| row.get(0),
+        )
+        .unwrap_or(0);
+
+    let now_str = Local::now().to_rfc3339();
     conn.execute(
-        "INSERT INTO habits (name, position, created_at, archived, color) VALUES (?1, ?2, datetime('now'), 0, ?3)",
-        params![trimmed, position, color],
+        "INSERT INTO habits (name, position, created_at, archived, color, start_month, end_month, parent_id)
+         VALUES (?1, ?2, ?3, 0, ?4, ?5, NULL, NULL)",
+        params![trimmed, position, now_str, color, target_month],
     )?;
     let id = conn.last_insert_rowid();
     Ok(Habit {
@@ -244,38 +334,182 @@ fn add_habit(state: tauri::State<'_, Mutex<Connection>>, name: String, color: Op
         name: trimmed.to_string(),
         position,
         archived: false,
-        created_at: Local::now().to_rfc3339(),
+        created_at: now_str,
         color,
+        start_month: target_month,
+        end_month: None,
+        parent_id: None,
     })
 }
 
 #[tauri::command]
-fn update_habit(state: tauri::State<'_, Mutex<Connection>>, id: i64, name: String, color: Option<String>) -> Result<(), AppError> {
+fn update_habit(
+    state: tauri::State<'_, Mutex<Connection>>,
+    id: i64,
+    name: String,
+    color: Option<String>,
+    month: Option<String>,
+) -> Result<(), AppError> {
     let trimmed = name.trim();
     if trimmed.is_empty() {
         return Err(AppError::Message("Habit name cannot be empty.".to_string()));
     }
-    let conn = state.lock().unwrap();
-    conn.execute("UPDATE habits SET name = ?1, color = ?2 WHERE id = ?3", params![trimmed, color, id])?;
+    let target_month = month.filter(|m| m.len() == 7).unwrap_or_else(current_month_str);
+    let mut conn = state.lock().unwrap();
+
+    let habit: Habit = conn.query_row(
+        "SELECT id, name, position, archived, created_at, color, start_month, end_month, parent_id FROM habits WHERE id = ?1",
+        params![id],
+        |row| {
+            Ok(Habit {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                position: row.get(2)?,
+                archived: row.get::<_, i64>(3)? == 1,
+                created_at: row.get(4)?,
+                color: row.get(5)?,
+                start_month: row.get(6)?,
+                end_month: row.get(7)?,
+                parent_id: row.get(8)?,
+            })
+        },
+    )?;
+
+    if habit.start_month < target_month {
+        // The habit was active in previous months.
+        // 1. Cap the old habit at the previous month
+        let prev_month = previous_month_str(&target_month)?;
+        let tx = conn.transaction()?;
+        tx.execute(
+            "UPDATE habits SET end_month = ?1 WHERE id = ?2",
+            params![prev_month, id],
+        )?;
+
+        // 2. Insert the new habit starting at target_month
+        let now_str = Local::now().to_rfc3339();
+        tx.execute(
+            "INSERT INTO habits (name, position, created_at, archived, color, start_month, end_month, parent_id)
+             VALUES (?1, ?2, ?3, 0, ?4, ?5, NULL, ?6)",
+            params![trimmed, habit.position, now_str, color, target_month, id],
+        )?;
+        let new_id = tx.last_insert_rowid();
+
+        // 3. Migrate any completions logged for target_month or future to new_id
+        let target_start_date = format!("{target_month}-01");
+        tx.execute(
+            "UPDATE habit_completions SET habit_id = ?1 WHERE habit_id = ?2 AND date >= ?3",
+            params![new_id, id, target_start_date],
+        )?;
+
+        tx.commit()?;
+    } else {
+        // The habit was created in target_month or later; update in-place
+        conn.execute(
+            "UPDATE habits SET name = ?1, color = ?2 WHERE id = ?3",
+            params![trimmed, color, id],
+        )?;
+    }
+
     Ok(())
 }
 
 #[tauri::command]
-fn archive_habit(state: tauri::State<'_, Mutex<Connection>>, id: i64, archived: bool) -> Result<(), AppError> {
+fn archive_habit(
+    state: tauri::State<'_, Mutex<Connection>>,
+    id: i64,
+    archived: bool,
+    month: Option<String>,
+) -> Result<(), AppError> {
+    let target_month = month.filter(|m| m.len() == 7).unwrap_or_else(current_month_str);
     let conn = state.lock().unwrap();
-    conn.execute("UPDATE habits SET archived = ?1 WHERE id = ?2", params![if archived { 1 } else { 0 }, id])?;
+
+    let habit: Habit = conn.query_row(
+        "SELECT id, name, position, archived, created_at, color, start_month, end_month, parent_id FROM habits WHERE id = ?1",
+        params![id],
+        |row| {
+            Ok(Habit {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                position: row.get(2)?,
+                archived: row.get::<_, i64>(3)? == 1,
+                created_at: row.get(4)?,
+                color: row.get(5)?,
+                start_month: row.get(6)?,
+                end_month: row.get(7)?,
+                parent_id: row.get(8)?,
+            })
+        },
+    )?;
+
+    if archived {
+        if habit.start_month < target_month {
+            // End active period at previous month so history remains intact
+            let prev_month = previous_month_str(&target_month)?;
+            conn.execute("UPDATE habits SET end_month = ?1 WHERE id = ?2", params![prev_month, id])?;
+        } else {
+            // Created in target_month or later, archive directly
+            conn.execute("UPDATE habits SET archived = 1 WHERE id = ?1", params![id])?;
+        }
+    } else {
+        // Restoring
+        if habit.end_month.is_some() {
+            // Reactivate from target_month
+            conn.execute("UPDATE habits SET end_month = NULL, archived = 0 WHERE id = ?1", params![id])?;
+        } else {
+            conn.execute("UPDATE habits SET archived = 0 WHERE id = ?1", params![id])?;
+        }
+    }
     Ok(())
 }
 
 #[tauri::command]
-fn delete_habit(state: tauri::State<'_, Mutex<Connection>>, id: i64) -> Result<(), AppError> {
-    let conn = state.lock().unwrap();
-    conn.execute("DELETE FROM habits WHERE id = ?1", params![id])?;
+fn delete_habit(
+    state: tauri::State<'_, Mutex<Connection>>,
+    id: i64,
+    month: Option<String>,
+) -> Result<(), AppError> {
+    let target_month = month.filter(|m| m.len() == 7).unwrap_or_else(current_month_str);
+    let mut conn = state.lock().unwrap();
+
+    let habit: Habit = conn.query_row(
+        "SELECT id, name, position, archived, created_at, color, start_month, end_month, parent_id FROM habits WHERE id = ?1",
+        params![id],
+        |row| {
+            Ok(Habit {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                position: row.get(2)?,
+                archived: row.get::<_, i64>(3)? == 1,
+                created_at: row.get(4)?,
+                color: row.get(5)?,
+                start_month: row.get(6)?,
+                end_month: row.get(7)?,
+                parent_id: row.get(8)?,
+            })
+        },
+    )?;
+
+    if habit.start_month < target_month {
+        // Preserve historical months, remove from target_month and future
+        let prev_month = previous_month_str(&target_month)?;
+        let tx = conn.transaction()?;
+        tx.execute("UPDATE habits SET end_month = ?1 WHERE id = ?2", params![prev_month, id])?;
+        let target_start_date = format!("{target_month}-01");
+        tx.execute("DELETE FROM habit_completions WHERE habit_id = ?1 AND date >= ?2", params![id, target_start_date])?;
+        tx.commit()?;
+    } else {
+        // Delete completely
+        conn.execute("DELETE FROM habits WHERE id = ?1", params![id])?;
+    }
     Ok(())
 }
 
 #[tauri::command]
-fn reorder_habits(state: tauri::State<'_, Mutex<Connection>>, ids: Vec<i64>) -> Result<(), AppError> {
+fn reorder_habits(
+    state: tauri::State<'_, Mutex<Connection>>,
+    ids: Vec<i64>,
+    _month: Option<String>,
+) -> Result<(), AppError> {
     let mut conn = state.lock().unwrap();
     let tx = conn.transaction()?;
     for (position, id) in ids.iter().enumerate() {
@@ -303,7 +537,7 @@ fn export_backup(state: tauri::State<'_, Mutex<Connection>>) -> Result<String, A
     let backup = Backup {
         version: 1,
         exported_at: Local::now().to_rfc3339(),
-        habits: load_habits(&conn)?,
+        habits: load_habits(&conn, None)?,
         completions: load_completions(&conn, None, None)?,
         settings: load_settings(&conn)?,
     };
@@ -322,9 +556,27 @@ fn import_backup(state: tauri::State<'_, Mutex<Connection>>, json: String) -> Re
     tx.execute("DELETE FROM habits", [])?;
     tx.execute("DELETE FROM settings", [])?;
     for habit in backup.habits {
+        let start_m = if !habit.start_month.is_empty() {
+            habit.start_month
+        } else if habit.created_at.len() >= 7 {
+            habit.created_at[..7].to_string()
+        } else {
+            "2000-01".to_string()
+        };
         tx.execute(
-            "INSERT INTO habits (id, name, position, created_at, archived, color) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
-            params![habit.id, habit.name, habit.position, habit.created_at, if habit.archived { 1 } else { 0 }, habit.color],
+            "INSERT INTO habits (id, name, position, created_at, archived, color, start_month, end_month, parent_id)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+            params![
+                habit.id,
+                habit.name,
+                habit.position,
+                habit.created_at,
+                if habit.archived { 1 } else { 0 },
+                habit.color,
+                start_m,
+                habit.end_month,
+                habit.parent_id
+            ],
         )?;
     }
     for completion in backup.completions {

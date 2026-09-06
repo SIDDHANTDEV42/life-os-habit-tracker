@@ -10,6 +10,9 @@ export interface Habit {
   color?: string | null;
   category?: string | null;
   target?: number | null; // e.g. 3 target sessions/units
+  startMonth?: string;
+  endMonth?: string | null;
+  parentId?: number | null;
 }
 
 export interface Completion {

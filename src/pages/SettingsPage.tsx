@@ -1,31 +1,56 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowDown, ArrowUp, Download, RotateCcw, Trash2, Upload } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Download, RotateCcw, Trash2, Upload, Sparkles } from "lucide-react";
 import { addHabit, archiveHabit, deleteHabit, exportBackup, importBackup, renameHabit, reorderHabits, resetData } from "../database/api";
 import { messageFromError } from "../lib/error";
+import { addMonths, monthKey, monthLabel } from "../lib/date";
 import type { Habit, Settings } from "../types";
 import { useToast, ToastPortal } from "../components/Toast";
 
 interface SettingsPageProps {
   habits: Habit[];
   settings: Settings;
-  onRefresh: () => Promise<void>;
+  visibleMonth?: Date;
+  onMonthChange?: (date: Date) => void;
+  onRefresh: (month?: Date) => Promise<void>;
   onSettingsChange: (settings: Settings) => Promise<void>;
 }
 
-const colors = ["#2563eb", "#16a34a", "#dc2626", "#9333ea", "#0891b2", "#ca8a04"];
-
-export function SettingsPage({ habits, settings, onRefresh, onSettingsChange }: SettingsPageProps) {
+export function SettingsPage({
+  habits,
+  settings,
+  visibleMonth: propMonth,
+  onMonthChange,
+  onRefresh,
+  onSettingsChange,
+}: SettingsPageProps) {
+  const [selectedMonth, setSelectedMonth] = useState<Date>(
+    () => propMonth ?? new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+  );
   const [name, setName] = useState("");
   const [color, setColor] = useState("#2563eb");
   const [error, setError] = useState<string | null>(null);
   const importRef = useRef<HTMLInputElement>(null);
   const { toasts, toast } = useToast();
 
+  useEffect(() => {
+    if (propMonth) {
+      setSelectedMonth(propMonth);
+    }
+  }, [propMonth]);
+
+  const targetMonthKey = monthKey(selectedMonth);
+
+  async function handleMonthChange(newMonth: Date) {
+    setSelectedMonth(newMonth);
+    onMonthChange?.(newMonth);
+    await onRefresh(newMonth);
+  }
+
   async function run(action: () => Promise<void>, success: string) {
     try {
       setError(null);
       await action();
-      await onRefresh();
+      await onRefresh(selectedMonth);
       toast(success);
     } catch (err) {
       setError(messageFromError(err));
@@ -36,7 +61,7 @@ export function SettingsPage({ habits, settings, onRefresh, onSettingsChange }: 
     const trimmed = name.trim();
     if (!trimmed) return;
     await run(async () => {
-      await addHabit(trimmed, color);
+      await addHabit(trimmed, color, targetMonthKey);
       setName("");
     }, "Habit added.");
   }
@@ -47,7 +72,7 @@ export function SettingsPage({ habits, settings, onRefresh, onSettingsChange }: 
     const target = index + direction;
     if (target < 0 || target >= ordered.length) return;
     [ordered[index], ordered[target]] = [ordered[target], ordered[index]];
-    await run(() => reorderHabits(ordered.map((habit) => habit.id)), "Habit order updated.");
+    await run(() => reorderHabits(ordered.map((habit) => habit.id), targetMonthKey), "Habit order updated.");
   }
 
   async function downloadBackup() {
@@ -130,23 +155,64 @@ export function SettingsPage({ habits, settings, onRefresh, onSettingsChange }: 
           <ToastPortal toasts={toasts} />
 
           <section id="settings-section-habits" className="settings-section scroll-mt-4">
-            <h2>Habits</h2>
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <h2>Habits</h2>
+              
+              {/* MONTH CONTEXT SWITCHER */}
+              <div className="flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-800 dark:bg-zinc-900/60">
+                <button
+                  type="button"
+                  onClick={() => handleMonthChange(addMonths(selectedMonth, -1))}
+                  className="rounded p-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+                  title="Previous month"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <span className="px-2 text-xs font-bold text-zinc-800 dark:text-zinc-200">
+                  {monthLabel(selectedMonth)}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleMonthChange(addMonths(selectedMonth, 1))}
+                  className="rounded p-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+                  title="Next month"
+                >
+                  <ChevronRight size={16} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleMonthChange(new Date(new Date().getFullYear(), new Date().getMonth(), 1))}
+                  className="rounded px-2 py-0.5 text-[11px] font-semibold text-[var(--accent)] hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+                >
+                  Current
+                </button>
+              </div>
+            </div>
+
+            {/* MONTH-SCOPED EXPLANATION BANNER */}
+            <div className="mb-4 flex items-center gap-2 rounded-lg border border-blue-200/80 bg-blue-50/70 p-2.5 text-xs text-blue-900 dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-200">
+              <Sparkles size={16} className="shrink-0 text-blue-600 dark:text-blue-400" />
+              <span>
+                Changes made here apply to <strong>{monthLabel(selectedMonth)} and upcoming months</strong>. Previous months remain intact with their historical logs.
+              </span>
+            </div>
+
             <div className="flex flex-wrap items-center gap-2">
               <input className="text-input min-w-64" value={name} onChange={(event) => setName(event.target.value)} placeholder="New habit name" />
               <label className="flex items-center gap-2"><input className="h-10 w-16" type="color" value={color} onChange={(event) => setColor(event.target.value)} /></label>
               <button className="primary-button" type="button" onClick={createHabit}>Add Habit</button>
             </div>
             <div className="mt-3 rounded border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-              {!active.length && <div className="px-3 py-2 text-sm text-zinc-500">No active habits. Add one above.</div>}
+              {!active.length && <div className="px-3 py-2 text-sm text-zinc-500">No active habits for {monthLabel(selectedMonth)}. Add one above.</div>}
               {active.map((habit) => (
                 <HabitRow
                   key={habit.id}
                   habit={habit}
-                  onRename={(newName, newColor) => run(() => renameHabit(habit.id, newName, newColor), "Habit updated.")}
-                  onArchive={() => run(() => archiveHabit(habit.id, true), "Habit archived.")}
+                  onRename={(newName, newColor) => run(() => renameHabit(habit.id, newName, newColor, targetMonthKey), "Habit updated.")}
+                  onArchive={() => run(() => archiveHabit(habit.id, true, targetMonthKey), "Habit archived.")}
                   onDelete={() => {
-                    if (confirm(`Delete ${habit.name}? Historical records for this habit will be removed.`)) {
-                      run(() => deleteHabit(habit.id), "Habit deleted.");
+                    if (confirm(`Delete ${habit.name}? Historical records in previous months will be preserved.`)) {
+                      run(() => deleteHabit(habit.id, targetMonthKey), "Habit deleted.");
                     }
                   }}
                   onMoveUp={() => moveHabit(habit.id, -1)}
@@ -160,7 +226,7 @@ export function SettingsPage({ habits, settings, onRefresh, onSettingsChange }: 
               {archived.map((habit) => (
                 <div key={habit.id} className="flex items-center justify-between border-b border-zinc-200 px-3 py-2 last:border-b-0 dark:border-zinc-800">
                   <span>{habit.name}</span>
-                  <button className="secondary-button" type="button" onClick={() => run(() => archiveHabit(habit.id, false), "Habit restored.")}>Restore</button>
+                  <button className="secondary-button" type="button" onClick={() => run(() => archiveHabit(habit.id, false, targetMonthKey), "Habit restored.")}>Restore</button>
                 </div>
               ))}
             </div>
