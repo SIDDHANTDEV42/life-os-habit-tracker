@@ -1,12 +1,14 @@
 import { useMemo, useRef, useState } from "react";
 import { Check } from "lucide-react";
-import { toggleCompletion } from "../database/api";
+import { toggleCompletion, saveSettings } from "../database/api";
 import { getMonthDays, isFutureIso, toIsoDate, todayIso } from "../lib/date";
 import { messageFromError } from "../lib/error";
-import type { Completion, Habit, Settings } from "../types";
+import type { Completion, Habit, Settings, HabitConfig } from "../types";
 import { DailyNoteModal } from "./DailyNoteModal";
+import { TierInputPopover } from "./TierInputPopover";
 import type { DailyScore } from "../calculations/dailyScore";
 import type { HabitStreak } from "../calculations/streaks";
+import { computeTier, meetsMinimum } from "../calculations/tierScore";
 
 interface HabitGridProps {
   visibleMonth: Date;
@@ -38,6 +40,13 @@ export function HabitGrid({
   const [optimistic, setOptimistic] = useState<Map<string, boolean>>(new Map());
   // F5: Daily Note Modal state
   const [activeNoteDate, setActiveNoteDate] = useState<string | null>(null);
+  // Life OS v2: Tier Input Popover state
+  const [popoverState, setPopoverState] = useState<{
+    habit: Habit;
+    date: string;
+    config: HabitConfig;
+    initialValue: number;
+  } | null>(null);
 
   const cellRefs = useRef(new Map<string, HTMLButtonElement>());
 
@@ -273,6 +282,44 @@ export function HabitGrid({
     }
   }
 
+  /* Life OS v2: Save numeric progress from TierInputPopover */
+  async function handleSaveTierValue(val: number) {
+    if (!popoverState) return;
+    const { habit, date, config } = popoverState;
+    const key = `${habit.id}:${date}`;
+    const nextDailyValues = {
+      ...(settings.lifeOsConfig?.habitDailyValues ?? {}),
+      [key]: val,
+    };
+    const nextConfig = {
+      ...(settings.lifeOsConfig ?? {
+        habitConfigs: {},
+        big3HabitIds: [],
+        sleepWakeTargets: [],
+        sleepWakeLogs: {},
+        deadTimeQueue: [],
+        lowEnergyDayHistory: {},
+        habitDailyValues: {},
+      }),
+      habitDailyValues: nextDailyValues,
+    };
+    const nextSettings = {
+      ...settings,
+      lifeOsConfig: nextConfig,
+    };
+
+    const isDone = meetsMinimum(val, config);
+    try {
+      await saveSettings(nextSettings);
+      await toggleCompletion(habit.id, date, isDone);
+      await onRefresh();
+    } catch (err) {
+      setError(messageFromError(err));
+    } finally {
+      setPopoverState(null);
+    }
+  }
+
   /* F12: Bulk-fill all habits for a date */
   async function bulkFillDay(date: string) {
     if (isFutureIso(date)) return;
@@ -478,6 +525,14 @@ export function HabitGrid({
                   const isToday = iso === today;
                   const isSkipped = Boolean(settings.dailySkipped?.[key]);
 
+                  // Life OS v2: Timed / Counted habit tier support
+                  const habitCfg = settings.lifeOsConfig?.habitConfigs?.[habit.id];
+                  const isTimedOrCounted =
+                    habitCfg &&
+                    (habitCfg.habitType === "timed" || habitCfg.habitType === "counted");
+                  const timedVal = settings.lifeOsConfig?.habitDailyValues?.[key] ?? 0;
+                  const tier = isTimedOrCounted ? computeTier(timedVal, habitCfg) : null;
+
                   return (
                     <td
                       key={key}
@@ -548,38 +603,77 @@ export function HabitGrid({
                             onToggleSkipped(key);
                           }
                         }}
-                        title={isSkipped ? "Skipped (Right-click to unskip)" : "Right-click to mark skipped"}
+                        title={
+                          isSkipped
+                            ? "Skipped (Right-click to unskip)"
+                            : isTimedOrCounted
+                            ? `${habit.name}: ${timedVal} ${habitCfg.unit || "min"} (${tier}) - Click to log`
+                            : "Right-click to mark skipped"
+                        }
                         onClick={() => {
                           setSelected({
                             row,
                             col,
                           });
 
-                          setCell(
-                            habit,
-                            iso,
-                            checked,
-                            row,
-                            col,
-                          );
+                          if (isTimedOrCounted && habitCfg) {
+                            if (!disabled) {
+                              setPopoverState({
+                                habit,
+                                date: iso,
+                                config: habitCfg,
+                                initialValue: timedVal,
+                              });
+                            }
+                          } else {
+                            setCell(
+                              habit,
+                              iso,
+                              checked,
+                              row,
+                              col,
+                            );
+                          }
                         }}
                         className={`${checkboxSize} inline-flex items-center justify-center rounded-sm border text-sm transition-all duration-150 ${
                           !disabled && !pending.has(key) ? "hover:scale-110 active:scale-95" : ""
                         } ${
-                          checked
-                            ? "text-white"
-                            : isSkipped
+                          isSkipped
                             ? "border-zinc-400 bg-zinc-200 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400"
+                            : isTimedOrCounted
+                            ? tier === "stretch"
+                              ? "bg-purple-600 border-purple-500 text-white font-bold"
+                              : tier === "target"
+                              ? "bg-emerald-600 border-emerald-500 text-white font-bold"
+                              : tier === "minimum"
+                              ? "bg-amber-500 border-amber-400 text-zinc-950 font-bold"
+                              : timedVal > 0
+                              ? "bg-red-500/20 border-red-500/50 text-red-400 font-bold"
+                              : "border-zinc-300 bg-white text-transparent hover:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950"
+                            : checked
+                            ? "text-white"
                             : "border-zinc-300 bg-white text-transparent hover:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950"
                         } ${
                           disabled
                             ? "cursor-not-allowed opacity-30"
                             : pending.has(key) ? "opacity-40 cursor-wait" : ""
                         }`}
-                        style={checked ? { backgroundColor: habit.color ?? 'var(--accent)', borderColor: habit.color ?? 'var(--accent)' } : {}}
+                        style={
+                          !isTimedOrCounted && checked
+                            ? { backgroundColor: habit.color ?? 'var(--accent)', borderColor: habit.color ?? 'var(--accent)' }
+                            : {}
+                        }
                       >
                         {isSkipped ? (
                           <span className="text-[10px] font-bold leading-none">—</span>
+                        ) : isTimedOrCounted ? (
+                          timedVal > 0 ? (
+                            <span className="text-[9px] font-extrabold leading-none tracking-tighter truncate max-w-full px-0.5">
+                              {timedVal}
+                            </span>
+                          ) : (
+                            <span className="text-transparent text-[10px]">—</span>
+                          )
                         ) : (
                           <Check
                             size={checkIconSize}
@@ -709,6 +803,17 @@ export function HabitGrid({
             }
           }}
           onClose={() => setActiveNoteDate(null)}
+        />
+      )}
+
+      {popoverState && (
+        <TierInputPopover
+          isOpen={true}
+          habitName={popoverState.habit.name}
+          config={popoverState.config}
+          initialValue={popoverState.initialValue}
+          onSave={handleSaveTierValue}
+          onClose={() => setPopoverState(null)}
         />
       )}
     </div>

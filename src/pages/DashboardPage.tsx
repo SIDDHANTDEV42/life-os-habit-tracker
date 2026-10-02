@@ -1,10 +1,39 @@
-import { useMemo } from "react";
-import { Flame, TrendingUp, TrendingDown, Minus, Calendar, Zap } from "lucide-react";
-import type { Habit, Completion, Settings } from "../types";
+import React, { useState, useMemo } from "react";
+import {
+  Flame,
+  ShieldCheck,
+  Clock,
+  Hash,
+  CheckCircle2,
+  Circle,
+  ChevronDown,
+  ChevronUp,
+  AlertTriangle,
+  Info,
+} from "lucide-react";
+import type {
+  Habit,
+  Completion,
+  Settings,
+  LifeOsConfig,
+  HabitConfig,
+  SleepWakeLog,
+} from "../types";
+import { DEFAULT_LIFE_OS_CONFIG } from "../types";
 import type { DailyScore } from "../calculations/dailyScore";
 import type { HabitStreak } from "../calculations/streaks";
-import { todayIso, toIsoDate } from "../lib/date";
-import { CountdownWidget } from "../components/CountdownWidget";
+import { calculateLifeOsTodayScore } from "../calculations/dailyScore";
+import { getHabitCategory, computeTier, meetsMinimum } from "../calculations/tierScore";
+import { todayIso } from "../lib/date";
+import { toggleCompletion, saveSettings } from "../database/api";
+
+import { TodayScore } from "../components/TodayScore";
+import { Big3Card } from "../components/Big3Card";
+import { SleepWakeCard } from "../components/SleepWakeCard";
+import { AbstinenceTracker } from "../components/AbstinenceTracker";
+import { DeadTimeQueue } from "../components/DeadTimeQueue";
+import { LowEnergyDay } from "../components/LowEnergyDay";
+import { TierInputPopover } from "../components/TierInputPopover";
 
 interface DashboardPageProps {
   habits: Habit[];
@@ -13,6 +42,8 @@ interface DashboardPageProps {
   streaks: HabitStreak[];
   settings: Settings;
   onNavigate: (tab: "habits" | "history" | "settings") => void;
+  onRefresh?: () => void;
+  onUpdateSettings?: (settings: Settings) => Promise<void>;
 }
 
 export function DashboardPage({
@@ -22,262 +53,504 @@ export function DashboardPage({
   streaks,
   settings,
   onNavigate,
+  onRefresh,
+  onUpdateSettings,
 }: DashboardPageProps) {
   const today = todayIso();
+  const lifeOsConfig: LifeOsConfig = settings.lifeOsConfig ?? DEFAULT_LIFE_OS_CONFIG;
 
-  // Today's completion rate
-  const todayCompletions = useMemo(
-    () => completions.filter((c) => c.date === today && c.completed),
-    [completions, today]
-  );
+  // Popover state for logging timed/counted habits
+  const [activePopover, setActivePopover] = useState<{
+    habit: Habit;
+    config: HabitConfig;
+    currentValue: number;
+  } | null>(null);
 
-  const todayPercent = habits.length
-    ? Math.round((todayCompletions.length / habits.length) * 100)
-    : 0;
+  const [showOptional, setShowOptional] = useState(false);
 
-  // Max active & best streak
-  const maxStreak = useMemo(
-    () => Math.max(0, ...streaks.map((s) => s.current)),
-    [streaks]
-  );
-  const bestStreak = useMemo(
-    () => Math.max(0, ...streaks.map((s) => s.best)),
-    [streaks]
-  );
-
-  // Group habits by category
-  const categorySummary = useMemo(() => {
-    const map = new Map<string, { total: number; done: number; color: string }>();
-    habits.forEach((h) => {
-      const cat = h.category?.trim() || "General";
-      const isDone = todayCompletions.some((c) => c.habitId === h.id);
-      const existing = map.get(cat) ?? { total: 0, done: 0, color: h.color ?? "#5e6ad2" };
-      map.set(cat, {
-        total: existing.total + 1,
-        done: existing.done + (isDone ? 1 : 0),
-        color: existing.color,
-      });
+  // Active habits for today (excluding expired temporary habits)
+  const dashboardHabits = useMemo(() => {
+    return habits.filter((h) => {
+      const cfg = lifeOsConfig.habitConfigs[h.id];
+      if (cfg?.isTemporary && cfg.temporaryEnd && cfg.temporaryEnd < today) {
+        return false;
+      }
+      return true;
     });
-    return Array.from(map.entries());
-  }, [habits, todayCompletions]);
+  }, [habits, lifeOsConfig.habitConfigs, today]);
 
-  // Last 7 days weekly activity for heatmap bar chart using local dates
-  const weeklyActivity = useMemo(() => {
-    const days: Array<{ label: string; percent: number }> = [];
-    const now = new Date();
-    const weekdays = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+  // Group active habits into three categories
+  const { coreHabits, guardrailHabits, optionalHabits, abstinenceHabits } = useMemo(() => {
+    const core: Habit[] = [];
+    const guardrail: Habit[] = [];
+    const optional: Habit[] = [];
+    const abstinence: Habit[] = [];
 
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(now.getDate() - i);
-      const iso = toIsoDate(d);
-      const scoreObj = dailyScores.find((s) => s.date === iso);
-      days.push({
-        label: weekdays[d.getDay()],
-        percent: scoreObj?.percent ?? 0,
-      });
+    for (const h of dashboardHabits) {
+      const cat = getHabitCategory(h.id, lifeOsConfig.habitConfigs);
+      if (cat === "core") {
+        core.push(h);
+      } else if (cat === "guardrail") {
+        guardrail.push(h);
+        const nameLower = h.name.toLowerCase();
+        if (
+          nameLower.includes("reel") ||
+          nameLower.includes("short") ||
+          nameLower.includes("porn") ||
+          nameLower.includes("clean") ||
+          nameLower.includes("abstinen")
+        ) {
+          abstinence.push(h);
+        }
+      } else {
+        optional.push(h);
+      }
     }
-    return days;
-  }, [dailyScores]);
 
-  // Compute actual weekly trend from the 7-day data
-  const weeklyTrend = useMemo(() => {
-    const withData = weeklyActivity.filter((d) => d.percent > 0);
-    if (withData.length < 3) return null;
-    const midpoint = Math.floor(withData.length / 2);
-    const firstHalf = withData.slice(0, midpoint);
-    const secondHalf = withData.slice(midpoint);
-    const firstAvg = firstHalf.reduce((s, d) => s + d.percent, 0) / firstHalf.length;
-    const secondAvg = secondHalf.reduce((s, d) => s + d.percent, 0) / secondHalf.length;
-    if (secondAvg > firstAvg + 3) return "up" as const;
-    if (secondAvg < firstAvg - 3) return "down" as const;
-    return "flat" as const;
-  }, [weeklyActivity]);
+    return {
+      coreHabits: core,
+      guardrailHabits: guardrail,
+      optionalHabits: optional,
+      abstinenceHabits: abstinence,
+    };
+  }, [dashboardHabits, lifeOsConfig.habitConfigs]);
 
-  // Circular gauge calculations (SVG circumference for r=45 is ~282.74)
-  const strokeDashoffset = 282.74 - (282.74 * todayPercent) / 100;
+  // Life OS v2 Today Score calculation (Core = Today Score, Guardrails = separate)
+  const todayScore = useMemo(
+    () => calculateLifeOsTodayScore(today, dashboardHabits, completions, lifeOsConfig),
+    [today, dashboardHabits, completions, lifeOsConfig]
+  );
+
+  // Completions map for quick lookup
+  const completedMap = useMemo(() => {
+    const map = new Map<number, boolean>();
+    for (const c of completions) {
+      if (c.date === today) {
+        map.set(c.habitId, c.completed);
+      }
+    }
+    return map;
+  }, [completions, today]);
+
+  // Handlers for habit interaction
+  const handleToggleBinary = async (habitId: number, currentCompleted: boolean) => {
+    try {
+      await toggleCompletion(habitId, today, !currentCompleted);
+      onRefresh?.();
+    } catch (e) {
+      console.error("Failed to toggle habit completion:", e);
+    }
+  };
+
+  const handleSaveTimedValue = async (value: number) => {
+    if (!activePopover) return;
+    const { habit, config } = activePopover;
+    const key = `${habit.id}:${today}`;
+
+    const nextDailyValues = {
+      ...lifeOsConfig.habitDailyValues,
+      [key]: value,
+    };
+
+    const nextConfig: LifeOsConfig = {
+      ...lifeOsConfig,
+      habitDailyValues: nextDailyValues,
+    };
+
+    const nextSettings: Settings = {
+      ...settings,
+      lifeOsConfig: nextConfig,
+    };
+
+    // If value meets minimum, automatically check completion in DB
+    const earned = meetsMinimum(value, config);
+    try {
+      await toggleCompletion(habit.id, today, earned);
+      if (onUpdateSettings) {
+        await onUpdateSettings(nextSettings);
+      } else {
+        await saveSettings(nextSettings);
+      }
+      onRefresh?.();
+    } catch (e) {
+      console.error("Failed to save habit tier value:", e);
+    } finally {
+      setActivePopover(null);
+    }
+  };
+
+  const handleSaveSleepWakeLog = async (log: SleepWakeLog) => {
+    const nextLogs = {
+      ...lifeOsConfig.sleepWakeLogs,
+      [today]: log,
+    };
+    const nextConfig: LifeOsConfig = {
+      ...lifeOsConfig,
+      sleepWakeLogs: nextLogs,
+    };
+    const nextSettings: Settings = {
+      ...settings,
+      lifeOsConfig: nextConfig,
+    };
+
+    if (onUpdateSettings) {
+      await onUpdateSettings(nextSettings);
+    } else {
+      await saveSettings(nextSettings);
+    }
+    onRefresh?.();
+  };
+
+  const isLowEnergyActive = lifeOsConfig.lowEnergyDayDate === today;
+
+  const handleActivateLowEnergy = async () => {
+    const nextHistory = {
+      ...lifeOsConfig.lowEnergyDayHistory,
+      [today]: true,
+    };
+    const nextConfig: LifeOsConfig = {
+      ...lifeOsConfig,
+      lowEnergyDayDate: today,
+      lowEnergyDayHistory: nextHistory,
+    };
+    const nextSettings: Settings = {
+      ...settings,
+      lifeOsConfig: nextConfig,
+    };
+    if (onUpdateSettings) {
+      await onUpdateSettings(nextSettings);
+    } else {
+      await saveSettings(nextSettings);
+    }
+    onRefresh?.();
+  };
+
+  const handleDeactivateLowEnergy = async () => {
+    const nextHistory = {
+      ...lifeOsConfig.lowEnergyDayHistory,
+      [today]: false,
+    };
+    const nextConfig: LifeOsConfig = {
+      ...lifeOsConfig,
+      lowEnergyDayDate: undefined,
+      lowEnergyDayHistory: nextHistory,
+    };
+    const nextSettings: Settings = {
+      ...settings,
+      lifeOsConfig: nextConfig,
+    };
+    if (onUpdateSettings) {
+      await onUpdateSettings(nextSettings);
+    } else {
+      await saveSettings(nextSettings);
+    }
+    onRefresh?.();
+  };
 
   return (
-    <div className="flex flex-col gap-8 pb-16">
-      {/* WELCOME & TODAY'S PROGRESS HERO */}
-      <section className="flex flex-col md:flex-row items-center justify-between gap-8 pt-4">
-        <div className="flex-1">
-          <div className="inline-flex items-center gap-2 rounded-full border border-orange-500/30 bg-orange-500/10 px-3.5 py-1 text-xs font-bold text-orange-600 dark:text-orange-400 mb-3 shadow-sm">
-            <Flame size={15} className="animate-pulse text-orange-500 shrink-0" />
-            <span className="whitespace-nowrap">
-              {maxStreak > 0 ? `${maxStreak} Day Streak Active` : bestStreak > 0 ? `${bestStreak} Day Record Streak` : "0 Day Streak"}
+    <div className="space-y-6 pb-12">
+      {/* Low Energy Alert Banner if active */}
+      {isLowEnergyActive && (
+        <div className="flex items-center justify-between rounded-2xl border border-amber-500/30 bg-amber-500/10 px-5 py-3.5 text-amber-500 animate-in fade-in">
+          <div className="flex items-center gap-3">
+            <AlertTriangle size={20} className="shrink-0" />
+            <span className="text-xs font-semibold">
+              Low Energy Protocol Active — Targets reduced to bare minimums. Focus strictly on protection.
+            </span>
+          </div>
+          <button
+            onClick={handleDeactivateLowEnergy}
+            className="text-xs font-bold underline hover:opacity-80"
+          >
+            Reset
+          </button>
+        </div>
+      )}
+
+      {/* SECTION 1: The Big 3 Anchor */}
+      <Big3Card
+        habits={habits}
+        completions={completions}
+        config={lifeOsConfig}
+        today={today}
+        onToggleBinary={handleToggleBinary}
+        onOpenTimedInput={(habit, config, val) =>
+          setActivePopover({ habit, config, currentValue: val })
+        }
+        onNavigateToSettings={() => onNavigate("settings")}
+      />
+
+      {/* SECTION 2: Today Score (Core) + Guardrails */}
+      <TodayScore score={todayScore} />
+
+      {/* SECTION 3: Performance Core Habits Strip */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-orange-500/10 text-orange-500 text-xs">
+              🔥
+            </span>
+            <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-800 dark:text-zinc-200">
+              Performance Core Habits ({todayScore.coreCompleted}/{todayScore.coreTotal})
+            </h3>
+          </div>
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">
+            Directly Drives Today Score
+          </span>
+        </div>
+
+        {coreHabits.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-zinc-300 p-4 text-center text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+            No habits tagged as Performance Core. Configure habit categories in Settings.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+            {coreHabits.map((habit) => {
+              const cfg = lifeOsConfig.habitConfigs[habit.id];
+              const isBinary = !cfg || cfg.habitType === "binary";
+              const isDone = completedMap.get(habit.id) ?? false;
+
+              if (isBinary) {
+                return (
+                  <div
+                    key={habit.id}
+                    onClick={() => handleToggleBinary(habit.id, isDone)}
+                    className={`flex cursor-pointer items-center justify-between rounded-xl border p-3 transition ${
+                      isDone
+                        ? "border-emerald-500/40 bg-emerald-500/5 dark:bg-emerald-950/20"
+                        : "border-zinc-200 bg-white hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900/60"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div
+                        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${
+                          isDone ? "bg-emerald-500 text-white" : "bg-zinc-100 text-zinc-400 dark:bg-zinc-800"
+                        }`}
+                      >
+                        {isDone ? <CheckCircle2 size={16} /> : <Circle size={16} />}
+                      </div>
+                      <span className="truncate text-xs font-semibold text-zinc-900 dark:text-zinc-100">
+                        {habit.name}
+                      </span>
+                    </div>
+                    <span className="text-[11px] font-semibold text-zinc-400">
+                      {isDone ? "1 pt" : "0 pt"}
+                    </span>
+                  </div>
+                );
+              }
+
+              // Timed / Counted
+              const key = `${habit.id}:${today}`;
+              const val = lifeOsConfig.habitDailyValues[key] ?? 0;
+              const tier = computeTier(val, cfg);
+              const minMet = meetsMinimum(val, cfg);
+
+              return (
+                <div
+                  key={habit.id}
+                  onClick={() =>
+                    setActivePopover({ habit, config: cfg, currentValue: val })
+                  }
+                  className={`flex cursor-pointer items-center justify-between rounded-xl border p-3 transition ${
+                    minMet
+                      ? "border-emerald-500/40 bg-emerald-500/5 dark:bg-emerald-950/20"
+                      : "border-zinc-200 bg-white hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900/60"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-indigo-500/10 text-indigo-500">
+                      {cfg.habitType === "timed" ? <Clock size={14} /> : <Hash size={14} />}
+                    </div>
+                    <div className="min-w-0">
+                      <span className="truncate text-xs font-semibold text-zinc-900 dark:text-zinc-100 block">
+                        {habit.name}
+                      </span>
+                      <span className="text-[11px] text-zinc-400">
+                        {val} {cfg.unit || "min"} (min: {cfg.tierMinimum ?? "—"})
+                      </span>
+                    </div>
+                  </div>
+                  <span
+                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                      tier === "stretch"
+                        ? "bg-purple-500/20 text-purple-400"
+                        : tier === "target"
+                        ? "bg-emerald-500/20 text-emerald-400"
+                        : tier === "minimum"
+                        ? "bg-amber-500/20 text-amber-400"
+                        : "bg-zinc-800 text-zinc-400"
+                    }`}
+                  >
+                    {tier}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* SECTION 4: Behavioral Guardrails Strip */}
+      {guardrailHabits.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500 text-xs">
+                🛡️
+              </span>
+              <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-800 dark:text-zinc-200">
+                Behavioral Guardrails ({todayScore.guardrailsCompleted}/{todayScore.guardrailsTotal})
+              </h3>
+            </div>
+            <span className="text-xs text-zinc-500 dark:text-zinc-400">
+              Non-negotiable Foundation
             </span>
           </div>
 
-          <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl text-zinc-900 dark:text-white">
-            Welcome back, Student
-          </h1>
-          <p className="mt-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 max-w-lg leading-relaxed">
-            {maxStreak > 0 ? (
-              <>
-                You're on a <strong className="text-orange-500 font-bold">{maxStreak}-day streak</strong>. Keep up the momentum for your goals!
-              </>
-            ) : bestStreak > 0 ? (
-              <>
-                Your best record is a <strong className="text-orange-500 font-bold">{bestStreak}-day streak</strong>. Log today's habits to start a new streak!
-              </>
-            ) : (
-              "Log today's habits to start building your streak!"
-            )}
-          </p>
-
-          <div className="mt-6 flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={() => onNavigate("habits")}
-              className="flex items-center gap-2 rounded-xl bg-[#5e6ad2] px-5 py-3 text-sm font-semibold text-white hover:bg-[#4b57be] hover:shadow-[0_0_20px_rgba(94,106,210,0.4)] transition-all active:scale-95 shadow-sm"
-            >
-              <Zap size={16} className="shrink-0" />
-              <span className="whitespace-nowrap">Log Today's Habits</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => onNavigate("history")}
-              className="flex items-center gap-2.5 rounded-xl border border-zinc-200 bg-white px-5 py-3 text-sm font-semibold text-zinc-800 hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900/80 dark:text-zinc-200 dark:hover:bg-zinc-800 transition-all active:scale-95 shadow-sm"
-            >
-              <Calendar size={16} className="shrink-0 text-zinc-500 dark:text-zinc-400" />
-              <span className="whitespace-nowrap">View Analytics</span>
-            </button>
-          </div>
-        </div>
-
-        {/* CIRCULAR PROGRESS GAUGE */}
-        <div className="relative flex h-56 w-56 shrink-0 items-center justify-center rounded-3xl border border-zinc-200 bg-white dark:border-zinc-800/80 dark:bg-zinc-900/40 p-4 backdrop-blur-xl shadow-xl">
-          <svg className="h-full w-full -rotate-90 transform" viewBox="0 0 100 100">
-            <circle
-              cx="50"
-              cy="50"
-              r="45"
-              fill="none"
-              stroke="#e2e8f0"
-              className="dark:stroke-[#211f1d]"
-              strokeWidth="7"
-              strokeLinecap="round"
-            />
-            <circle
-              cx="50"
-              cy="50"
-              r="45"
-              fill="none"
-              stroke="#5e6ad2"
-              strokeWidth="7"
-              strokeDasharray="282.74"
-              strokeDashoffset={strokeDashoffset}
-              strokeLinecap="round"
-              className="transition-all duration-700 ease-out"
-              style={{ filter: "drop-shadow(0 0 8px rgba(94, 106, 210, 0.4))" }}
-            />
-          </svg>
-          <div className="absolute flex flex-col items-center justify-center text-center">
-            <span className="text-4xl font-extrabold tracking-tighter text-zinc-900 dark:text-white">{todayPercent}%</span>
-            <span className="mt-1 text-[10px] font-bold tracking-widest text-zinc-500 dark:text-zinc-400 uppercase">TODAY</span>
-          </div>
-        </div>
-      </section>
-
-      {/* TARGET COUNTDOWN BANNER */}
-      {settings.countdownDate && (
-        <CountdownWidget
-          targetDate={settings.countdownDate}
-          title={settings.countdownTitle}
-        />
-      )}
-
-      {/* DASHBOARD BENTO GRID */}
-      <section className="grid grid-cols-1 gap-6 md:grid-cols-3">
-        {/* WEEKLY ACTIVITY HEATMAP */}
-        <div className="relative overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900/40 p-6 backdrop-blur-xl md:col-span-2 shadow-sm">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-lg font-bold text-zinc-900 dark:text-white">Weekly Activity</h2>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">Completion rate over the last 7 days</p>
-            </div>
-            {weeklyTrend === "down" ? (
-              <div className="flex items-center gap-1.5 rounded-full border border-red-500/30 bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400 px-3 py-1 text-xs font-semibold">
-                <TrendingDown size={14} />
-                <span>Trending Down</span>
-              </div>
-            ) : weeklyTrend === "up" ? (
-              <div className="flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 px-3 py-1 text-xs font-semibold">
-                <TrendingUp size={14} />
-                <span>Trending Up</span>
-              </div>
-            ) : weeklyTrend === "flat" ? (
-              <div className="flex items-center gap-1.5 rounded-full border border-blue-500/30 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 px-3 py-1 text-xs font-semibold">
-                <Minus size={14} />
-                <span>Holding Steady</span>
-              </div>
-            ) : null}
-          </div>
-
-          {/* HEATMAP BARS WITH PERCENTAGES */}
-          <div className="flex h-36 items-end justify-between gap-3 pt-4">
-            {weeklyActivity.map((day, idx) => (
-              <div key={idx} className="flex flex-1 flex-col items-center gap-1.5 h-full justify-end group">
-                <span className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-white transition-colors">
-                  {day.percent}%
-                </span>
-                <div className="w-full rounded-t bg-zinc-100 dark:bg-zinc-800/60 relative overflow-hidden flex items-end h-full">
-                  <div
-                    className={`w-full rounded-t transition-all duration-500 ${
-                      day.percent >= 80
-                        ? "bg-[#e4f222] shadow-[0_0_12px_rgba(228,242,34,0.4)]"
-                        : day.percent >= 50
-                        ? "bg-[#5e6ad2] shadow-[0_0_12px_rgba(94,106,210,0.4)]"
-                        : day.percent > 0
-                        ? "bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.4)]"
-                        : "bg-zinc-300 dark:bg-zinc-700/60"
-                    }`}
-                    style={{ height: `${Math.max(day.percent, 8)}%` }}
-                  />
-                </div>
-                <span className="text-[10px] font-bold tracking-wider text-zinc-500 dark:text-zinc-400">{day.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ACTIVE HABITS SUMMARY */}
-        <div className="flex flex-col justify-between rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900/40 p-6 backdrop-blur-xl shadow-sm">
-          <div>
-            <h2 className="text-lg font-bold text-zinc-900 dark:text-white">Active Habits</h2>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">Currently tracking</p>
-          </div>
-
-          <div className="mt-4">
-            <div className="flex items-baseline gap-3">
-              <span className="text-5xl font-extrabold tracking-tighter text-zinc-900 dark:text-white">
-                {habits.length}
-              </span>
-              <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                Total Habits
-              </span>
-            </div>
-
-            <div className="mt-6 space-y-3">
-              {categorySummary.map(([cat, data]) => (
-                <div key={cat} className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="h-2 w-2 rounded-full"
-                      style={{ backgroundColor: data.color }}
-                    />
-                    <span className="font-medium text-zinc-700 dark:text-zinc-300">{cat}</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
+            {guardrailHabits.map((habit) => {
+              const isDone = completedMap.get(habit.id) ?? false;
+              return (
+                <div
+                  key={habit.id}
+                  onClick={() => handleToggleBinary(habit.id, isDone)}
+                  className={`flex cursor-pointer items-center justify-between rounded-xl border p-3 transition ${
+                    isDone
+                      ? "border-emerald-500/40 bg-emerald-500/5 dark:bg-emerald-950/20"
+                      : "border-zinc-200 bg-white hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900/60"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div
+                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md ${
+                        isDone ? "bg-emerald-500 text-white" : "bg-zinc-100 text-zinc-400 dark:bg-zinc-800"
+                      }`}
+                    >
+                      {isDone ? <CheckCircle2 size={14} /> : <Circle size={14} />}
+                    </div>
+                    <span className="truncate text-xs font-semibold text-zinc-900 dark:text-zinc-100">
+                      {habit.name}
+                    </span>
                   </div>
-                  <span className="font-semibold text-zinc-900 dark:text-white">
-                    {data.done}/{data.total}
+                  <span
+                    className={`text-[10px] font-bold ${
+                      isDone ? "text-emerald-500" : "text-zinc-400"
+                    }`}
+                  >
+                    {isDone ? "Protected" : "Pending"}
                   </span>
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
         </div>
-      </section>
+      )}
+
+      {/* SECTION 5: Sleep / Wake Schedule Card */}
+      <SleepWakeCard
+        today={today}
+        config={lifeOsConfig}
+        onSaveLog={handleSaveSleepWakeLog}
+      />
+
+      {/* SECTION 6: Abstinence & Dopamine Guardrails */}
+      <AbstinenceTracker
+        abstinenceHabits={abstinenceHabits}
+        completions={completions}
+        today={today}
+        onToggleClean={handleToggleBinary}
+      />
+
+      {/* SECTION 7: Dead Time Queue (Collapsible) */}
+      <DeadTimeQueue items={lifeOsConfig.deadTimeQueue} />
+
+      {/* SECTION 8: Optional Work (Collapsible, Does Not Affect Score) */}
+      {optionalHabits.length > 0 && (
+        <div className="rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900/70">
+          <button
+            onClick={() => setShowOptional(!showOptional)}
+            className="flex w-full items-center justify-between p-4 text-left hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 transition rounded-2xl"
+          >
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-200/70 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 text-xs">
+                📋
+              </span>
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-800 dark:text-zinc-200">
+                  Optional & Secondary Work ({optionalHabits.length})
+                </h3>
+                <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                  These are secondary. Protect your Big 3 and core habits first.
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-zinc-400 hidden sm:inline">
+                {showOptional ? "Hide" : "Show"}
+              </span>
+              {showOptional ? <ChevronUp size={18} className="text-zinc-400" /> : <ChevronDown size={18} className="text-zinc-400" />}
+            </div>
+          </button>
+
+          {showOptional && (
+            <div className="border-t border-zinc-100 p-4 dark:border-zinc-800 animate-in fade-in duration-150">
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-3 italic">
+                * Note: Optional habits do not count toward your Today Score or Guardrails.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+                {optionalHabits.map((habit) => {
+                  const isDone = completedMap.get(habit.id) ?? false;
+                  return (
+                    <div
+                      key={habit.id}
+                      onClick={() => handleToggleBinary(habit.id, isDone)}
+                      className={`flex cursor-pointer items-center justify-between rounded-xl border p-3 transition ${
+                        isDone
+                          ? "border-zinc-400/40 bg-zinc-100/60 dark:border-zinc-700 dark:bg-zinc-800/40"
+                          : "border-zinc-200 bg-white hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900/60"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div
+                          className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md ${
+                            isDone ? "bg-zinc-700 text-white dark:bg-zinc-300 dark:text-zinc-900" : "bg-zinc-100 text-zinc-400 dark:bg-zinc-800"
+                          }`}
+                        >
+                          {isDone ? <CheckCircle2 size={14} /> : <Circle size={14} />}
+                        </div>
+                        <span className="truncate text-xs font-semibold text-zinc-800 dark:text-zinc-200">
+                          {habit.name}
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-zinc-400">Optional</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* SECTION 9: Low Energy Day Toggle Protocol */}
+      <LowEnergyDay
+        isActiveToday={isLowEnergyActive}
+        onActivate={handleActivateLowEnergy}
+        onDeactivate={handleDeactivateLowEnergy}
+      />
+
+      {/* Tier Input Modal */}
+      {activePopover && (
+        <TierInputPopover
+          isOpen={true}
+          habitName={activePopover.habit.name}
+          config={activePopover.config}
+          initialValue={activePopover.currentValue}
+          onSave={handleSaveTimedValue}
+          onClose={() => setActivePopover(null)}
+        />
+      )}
     </div>
   );
 }

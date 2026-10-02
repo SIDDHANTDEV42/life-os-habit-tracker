@@ -6,6 +6,8 @@ import { addMonths, monthKey, monthLabel } from "../lib/date";
 import type { Habit, Settings } from "../types";
 import { useToast, ToastPortal } from "../components/Toast";
 
+import { LifeOsSettings } from "../components/LifeOsSettings";
+
 interface SettingsPageProps {
   habits: Habit[];
   settings: Settings;
@@ -99,9 +101,10 @@ export function SettingsPage({
   const active = habits.filter((habit) => !habit.archived).sort((a, b) => a.position - b.position);
   const archived = habits.filter((habit) => habit.archived).sort((a, b) => a.position - b.position);
 
-  const sectionIds = ["habits", "appearance", "data", "about"] as const;
+  const sectionIds = ["habits", "lifeos", "appearance", "data", "about"] as const;
   const sectionLabels: Record<typeof sectionIds[number], string> = {
     habits: "Habits",
+    lifeos: "Life OS v2",
     appearance: "Appearance",
     data: "Data",
     about: "About",
@@ -230,6 +233,21 @@ export function SettingsPage({
                 </div>
               ))}
             </div>
+          </section>
+
+          <section id="settings-section-lifeos" className="settings-section scroll-mt-4">
+            <h2>Life OS v2 — Behavior Control Layer</h2>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-4">
+              Configure your Big 3 anchors, tier thresholds (minimum / target / stretch), circadian targets, and free-time queues.
+            </p>
+            <LifeOsSettings
+              habits={habits}
+              settings={settings}
+              onUpdateConfig={async (newConfig) => {
+                await onSettingsChange({ ...settings, lifeOsConfig: newConfig });
+                toast("Life OS configuration updated.");
+              }}
+            />
           </section>
 
           <section id="settings-section-appearance" className="settings-section scroll-mt-4">

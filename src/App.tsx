@@ -234,6 +234,8 @@ export default function App() {
               streaks={streaks}
               settings={settings}
               onNavigate={setTab}
+              onRefresh={() => refresh()}
+              onUpdateSettings={updateSettings}
             />
           )}
           {tab === "habits" && (
